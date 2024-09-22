@@ -1,0 +1,17 @@
+{
+  "name": "paywaybackend",
+  "version": "1.0.0",
+  "description": "basic app that replicate payments apps",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "node index.js"
+  },
+  "author": "Shivam Yadav",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0",
+    "mongoose": "^8.6.3",
+    "zod": "^3.23.8"
+  }
+}
