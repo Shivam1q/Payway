@@ -1,11 +1,11 @@
 import express from "express";
 import zod from "zod";
 import jwt from "jsonwebtoken";
-import User from "./db.js";
-import JWT_SECRET from "../config";
-import authMiddleware from "../middleware.js";
+import { User, Account } from "../db.js";
+import {JWT_SECRET} from "../config.js";
+import {authMiddleware} from "../middleware.js";
 
-const router = express.Router();
+const userRouter = express.Router();
 
 /* --------------------------------------------------------------------------------------------------------------------------*/
 
@@ -16,7 +16,7 @@ const signupSchema = zod.object({
   lastName: zod.string(),
 });
 
-router.post("/signup", async (req, res, next) => {
+userRouter.post("/signup", async (req, res, next) => {
   const body = req.body;
   const {success} = signupSchema.safeParse(req.body);
   if(!success) {
@@ -29,13 +29,21 @@ router.post("/signup", async (req, res, next) => {
     username: body.username
   })
 
-  if(user._id){
+  if(user){
     return res.status(411).json({
       message: "Email already used!"
     })
   }
 
   const dbUser = await User.create(body);
+
+  const userId = dbUser._id;
+
+  await Account.create({
+    userId,
+    balance: 1 + Math.random()*10000,
+  })
+
   const token = jwt.sign({
     userId: dbUser._id
   }, JWT_SECRET);
@@ -54,29 +62,22 @@ const signinSchema = zod.object({
   password: zod.string(),
 })
 
-router.post("/signin", async (req, res, next) => {
-  const body = req.body;
+userRouter.post("/signin", async (req, res, next) => {
   const {success} = signinSchema.safeParse(req.body);
   if(!success){
     return res.status(411).json({
-      message : "Error while login, invalid inputs"
+      message : "Invalid inputs"
     })
   }
 
   const user = await User.findOne({
-    username : body.username,
-    password : body.password,
+    username : req.body.username,
+    password : req.body.password,
   })
 
-  if(!user._id){
+  if(!user){
     return res.status(411).json({
       message : "user doesn't exist, try to signup"
-    })
-  }
-
-  if(user.password != password){
-    return res.status(411).json({
-      message : "invalid credentials"
     })
   }
 
@@ -98,7 +99,7 @@ const updateSchema = zod.object({
   lastName: zod.string().optional(),
 })
 
-router.put('/', authMiddleware, async (req, res, next) => {
+userRouter.put('/', authMiddleware, async (req, res, next) => {
   const {success} = updateSchema.safeParse(req.body);
   if(!success){
     return res.status(411).json({
@@ -115,7 +116,7 @@ router.put('/', authMiddleware, async (req, res, next) => {
 
 /* --------------------------------------------------------------------------------------------------------------------------*/
 
-router.get("/bulk", async(req,res) => {
+userRouter.get("/bulk", async(req,res) => {
   const filter = req.query.filter || "";
 
   const users = await User.find({
@@ -141,5 +142,5 @@ router.get("/bulk", async(req,res) => {
 })
 
 
-module.exports = router;
+export {userRouter};
 

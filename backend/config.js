@@ -1,4 +1,3 @@
+const JWT_SECRET = 'your-secret-key';
 
-const JWT_SECRET = "shivamsecret";
-
-module.exports = JWT_SECRET;
+export {JWT_SECRET};
